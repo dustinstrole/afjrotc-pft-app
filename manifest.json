@@ -1,7 +1,7 @@
 {
-  "name": "AFJROTC PFT Calculator",
-  "short_name": "PFT Calc",
-  "start_url": "index.html",
+  "name": "AFJROTC PFT Unit Manager",
+  "short_name": "PFT Manager",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#0a1f44",
   "theme_color": "#0a1f44",
