@@ -1,315 +1,1116 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>AFJROTC PFT Manager Pro</title>
-	<link rel="manifest" href="manifest.json">
-	<meta name="theme-color" content="#0a1f44">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AFJROTC PFT Unit Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0a1f44">
 
-	<style>
-		body {
-			font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-			background: #0a1f44;
-			color: white;
-			margin: 0;
-			padding: 20px;
-		}
-
-		.container {
-			max-width: 700px;
-			margin: auto;
-		}
-
-		.card {
-			background: #132b63;
-			padding: 15px;
-			border-radius: 10px;
-			margin-bottom: 15px;
-		}
-
-		input,
-		select {
-			width: 100%;
-			padding: 8px;
-			margin-top: 5px;
-			border-radius: 6px;
-			border: none;
-		}
-
-		button {
-			width: 100%;
-			padding: 10px;
-			background: #f4c430;
-			border: none;
-			border-radius: 8px;
-			font-weight: bold;
-			margin-top: 10px;
-		}
-
-		table {
-			width: 100%;
-			font-size: 13px;
-		}
-
-		.pass {
-			color: #6CFF6C;
-			font-weight: bold;
-		}
-
-		.fail {
-			color: #FF6C6C;
-			font-weight: bold;
-		}
-
-		.lock {
-			position: fixed;
-			top: 0;
-			left: 0;
-			width: 100%;
-			height: 100%;
-			background: #0a1f44;
-			display: flex;
-			justify-content: center;
-			align-items: center;
-		}
-
-		.printView {
-			display: none;
-		}
-	</style>
+<style>
+:root{
+  --bg:#0a1f44;
+  --card:#132b63;
+  --accent:#f4c430;
+  --text:#ffffff;
+  --muted:rgba(255,255,255,.8);
+  --good:#6CFF6C;
+  --bad:#FF6C6C;
+  --line:rgba(255,255,255,.15);
+}
+*{box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  margin:0; background:var(--bg); color:var(--text); padding:16px;
+}
+.container{max-width:980px; margin:0 auto}
+h1,h2,h3{margin:0 0 10px}
+.small{font-size:13px; color:var(--muted)}
+.row{display:grid; grid-template-columns:1fr; gap:12px}
+@media(min-width:900px){ .row{grid-template-columns: 1fr 1fr} }
+.card{
+  background:var(--card); border-radius:12px; padding:14px;
+  border:1px solid var(--line);
+}
+label{display:block; margin-top:10px; font-size:13px; color:var(--muted)}
+input,select,textarea{
+  width:100%; padding:10px; border-radius:10px; border:1px solid var(--line);
+  background:rgba(0,0,0,.12); color:var(--text); outline:none;
+}
+input::placeholder, textarea::placeholder{color:rgba(255,255,255,.55)}
+textarea{min-height:70px}
+.btn{
+  width:100%; padding:11px; margin-top:10px; border-radius:12px;
+  border:none; background:var(--accent); font-weight:800; font-size:15px;
+}
+.btn.secondary{background:rgba(255,255,255,.12); color:var(--text); border:1px solid var(--line)}
+.btn.danger{background:rgba(255,108,108,.22); color:var(--text); border:1px solid rgba(255,108,108,.35)}
+.btn.small{padding:7px 10px; font-size:13px; border-radius:10px; width:auto}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px}
+.grid3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px}
+@media(max-width:520px){ .grid3{grid-template-columns:1fr} }
+.pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid var(--line); font-size:12px; color:var(--muted)}
+.pass{color:var(--good); font-weight:800}
+.fail{color:var(--bad); font-weight:800}
+hr{border:none; border-top:1px solid var(--line); margin:12px 0}
+table{width:100%; border-collapse:collapse; font-size:13px}
+th,td{padding:8px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top}
+th{color:var(--muted); font-weight:700}
+.actions{display:flex; gap:8px; flex-wrap:wrap}
+.topbar{
+  display:flex; gap:10px; align-items:center; justify-content:space-between;
+  margin-bottom:12px;
+}
+.tabs{display:flex; gap:8px; flex-wrap:wrap}
+.tab{
+  padding:8px 10px; border-radius:12px; border:1px solid var(--line);
+  background:rgba(255,255,255,.06); color:var(--text);
+  font-weight:700; font-size:13px;
+}
+.tab.active{background:rgba(244,196,48,.18); border-color:rgba(244,196,48,.35)}
+.modalBackdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.6);
+  display:none; align-items:center; justify-content:center; padding:16px;
+}
+.modal{max-width:640px; width:100%; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px}
+@media print{
+  body{background:white; color:black; padding:0}
+  .noPrint{display:none !important}
+  .card{border:1px solid #ddd; background:white}
+  table{font-size:12px}
+}
+</style>
 </head>
 
 <body>
+<div class="container">
 
-	<div id="lockScreen" class="lock">
-		<div class="card">
-			<h3>Instructor Login</h3>
-			<input type="password" id="password" placeholder="Enter Password">
-			<button onclick="unlock()">Enter</button>
-		</div>
-	</div>
+  <div id="lock" class="card" style="max-width:520px; margin:40px auto;" class="noPrint">
+    <h2>Instructor Login</h2>
+    <div class="small">Default password is <b>JROTC2026</b>. You can change it after logging in.</div>
+    <label>Password</label>
+    <input type="password" id="pw" placeholder="Enter password">
+    <button class="btn" onclick="unlock()">Enter</button>
+  </div>
 
-	<div class="container" id="app" style="display:none;">
+  <div id="app" style="display:none;">
+    <div class="topbar noPrint">
+      <div>
+        <h1>AFJROTC PFT Unit Manager</h1>
+        <div class="small">
+          Local-only app (data stays on this device unless you export/backup).
+        </div>
+      </div>
+      <div class="actions">
+        <button class="btn small secondary" onclick="openModal('settingsModal')">Settings</button>
+        <button class="btn small secondary" onclick="openModal('backupModal')">Backup/Restore</button>
+        <button class="btn small secondary" onclick="window.print()">Print</button>
+      </div>
+    </div>
 
-		<h2>AFJROTC PFT Manager Pro</h2>
+    <div class="tabs noPrint">
+      <button class="tab active" id="tabRoster" onclick="setTab('roster')">Roster</button>
+      <button class="tab" id="tabTest" onclick="setTab('test')">Enter Test</button>
+      <button class="tab" id="tabReports" onclick="setTab('reports')">Reports</button>
+      <button class="tab" id="tabLeaderboard" onclick="setTab('leaderboard')">Leaderboard</button>
+    </div>
 
-		<div class="card">
-			<label>Cadet Name</label>
-			<input type="text" id="name">
+    <!-- ROSTER -->
+    <div id="viewRoster" class="row">
+      <div class="card">
+        <h2>Cadet Roster</h2>
+        <div class="small">Add cadets once, then record PFT tests anytime.</div>
 
-			<label>Flight</label>
-			<select id="flight">
-				<option>Alpha</option>
-				<option>Bravo</option>
-				<option>Charlie</option>
-				<option>Delta</option>
-			</select>
+        <label>Search</label>
+        <input id="rosterSearch" placeholder="Search by name, flight, grade, ID…" oninput="renderAll()">
 
-			<label>Gender</label>
-			<select id="gender">
-				<option value="male">Male</option>
-				<option value="female">Female</option>
-			</select>
-		</div>
+        <hr>
 
-		<div class="card">
-			<label>Push-Ups</label>
-			<input type="number" id="push">
+        <h3>Add Cadet</h3>
+        <div class="grid2">
+          <div>
+            <label>Last Name</label>
+            <input id="cLast" placeholder="Strole">
+          </div>
+          <div>
+            <label>First Name</label>
+            <input id="cFirst" placeholder="Dustin">
+          </div>
+        </div>
 
-			<label>Sit-Ups</label>
-			<input type="number" id="sit">
+        <div class="grid3">
+          <div>
+            <label>Cadet ID (optional)</label>
+            <input id="cId" placeholder="IN-20011-###">
+          </div>
+          <div>
+            <label>Flight</label>
+            <select id="cFlight">
+              <option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option>
+              <option>Echo</option><option>Foxtrot</option>
+            </select>
+          </div>
+          <div>
+            <label>Grade</label>
+            <select id="cGrade">
+              <option>9</option><option>10</option><option>11</option><option>12</option>
+            </select>
+          </div>
+        </div>
 
-			<label>Run Minutes</label>
-			<input type="number" id="min">
+        <div class="grid3">
+          <div>
+            <label>Gender</label>
+            <select id="cGender">
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+          <div>
+            <label>Notes (optional)</label>
+            <input id="cNotes" placeholder="Waiver, injuries, etc.">
+          </div>
+          <div style="display:flex; align-items:flex-end;">
+            <button class="btn" onclick="addCadet()">Add Cadet</button>
+          </div>
+        </div>
 
-			<label>Run Seconds</label>
-			<input type="number" id="sec">
-		</div>
+      </div>
 
-		<button onclick="calculate()">Save Test</button>
+      <div class="card">
+        <h2>Roster List</h2>
+        <div class="small" id="rosterStats"></div>
+        <hr>
+        <div class="actions noPrint">
+          <button class="btn small secondary" onclick="exportCSV('roster')">Export Roster CSV</button>
+          <button class="btn small danger" onclick="clearAll('cadets')">Clear All Cadets</button>
+        </div>
+        <hr>
+        <div id="rosterTable"></div>
+      </div>
+    </div>
 
-		<div class="card" id="result"></div>
+    <!-- ENTER TEST -->
+    <div id="viewTest" class="row" style="display:none;">
+      <div class="card">
+        <h2>Enter PFT Test</h2>
+        <div class="small">Select a cadet and enter results. Saved with a date stamp.</div>
 
-		<div class="card">
-			<h3>Records</h3>
-			<div id="records"></div>
-			<button onclick="exportCSV()">Export CSV</button>
-			<button onclick="clearAll()">Clear All Records</button>
-			<button onclick="window.print()">Print Report</button>
-		</div>
+        <label>Select Cadet</label>
+        <select id="testCadet"></select>
 
-		<div class="card">
-			<h3>Flight Averages</h3>
-			<div id="flightAvg"></div>
-		</div>
+        <div class="grid3">
+          <div>
+            <label>Test Date</label>
+            <input type="date" id="testDate">
+          </div>
+          <div>
+            <label>Flight (auto)</label>
+            <input id="testFlight" disabled>
+          </div>
+          <div>
+            <label>Gender (auto)</label>
+            <input id="testGender" disabled>
+          </div>
+        </div>
 
-		<div class="card">
-			<h3>Squadron Average</h3>
-			<div id="squadAvg"></div>
-		</div>
+        <hr>
 
-	</div>
+        <div class="grid3">
+          <div>
+            <label>Push-ups</label>
+            <input type="number" id="tPush" min="0" placeholder="0">
+          </div>
+          <div>
+            <label>Sit-ups</label>
+            <input type="number" id="tSit" min="0" placeholder="0">
+          </div>
+          <div>
+            <label>Run Time (mm:ss)</label>
+            <div class="grid2">
+              <input type="number" id="tMin" min="0" placeholder="Min">
+              <input type="number" id="tSec" min="0" max="59" placeholder="Sec">
+            </div>
+          </div>
+        </div>
 
-	<script>
-		// ===== PASSWORD =====
-		const INSTRUCTOR_PASSWORD = "JROTC2026";
+        <label>Comments (optional)</label>
+        <textarea id="tComment" placeholder="Injury, weather, retest planned, etc."></textarea>
 
-		function unlock() {
-			if (document.getElementById("password").value === INSTRUCTOR_PASSWORD) {
-				document.getElementById("lockScreen").style.display = "none";
-				document.getElementById("app").style.display = "block";
-			} else {
-				alert("Incorrect password.");
-			}
-		}
+        <button class="btn" onclick="saveTest()">Save Test</button>
 
-		// ===== SCORING =====
-		function scorePushUps(gender, reps) {
-			let max = (gender === "male") ? 60 : 45;
-			return Math.min(40, Math.floor((reps / max) * 40));
-		}
+        <div id="testResult" class="card" style="margin-top:12px; display:none;"></div>
+      </div>
 
-		function scoreSitUps(gender, reps) {
-			let max = 60;
-			return Math.min(40, Math.floor((reps / max) * 40));
-		}
+      <div class="card">
+        <h2>Recent Tests</h2>
+        <div class="small">Most recent 25 tests.</div>
+        <hr>
+        <div class="actions noPrint">
+          <button class="btn small secondary" onclick="exportCSV('tests')">Export Tests CSV</button>
+          <button class="btn small danger" onclick="clearAll('tests')">Clear All Tests</button>
+        </div>
+        <hr>
+        <div id="recentTests"></div>
+      </div>
+    </div>
 
-		function scoreRun(seconds) {
-			let best = 360,
-				worst = 900;
-			if (seconds <= best) return 20;
-			if (seconds >= worst) return 0;
-			return Math.floor(((worst - seconds) / (worst - best)) * 20);
-		}
+    <!-- REPORTS -->
+    <div id="viewReports" class="row" style="display:none;">
+      <div class="card">
+        <h2>Reports</h2>
+        <div class="small">Filter by flight and date range.</div>
 
-		// ===== SAVE RECORD =====
-		function calculate() {
+        <div class="grid3 noPrint">
+          <div>
+            <label>Flight</label>
+            <select id="repFlight" onchange="renderAll()">
+              <option value="ALL">All Flights</option>
+              <option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option>
+              <option>Echo</option><option>Foxtrot</option>
+            </select>
+          </div>
+          <div>
+            <label>From</label>
+            <input type="date" id="repFrom" onchange="renderAll()">
+          </div>
+          <div>
+            <label>To</label>
+            <input type="date" id="repTo" onchange="renderAll()">
+          </div>
+        </div>
 
-			let name = document.getElementById("name").value;
-			let flight = document.getElementById("flight").value;
-			let gender = document.getElementById("gender").value;
-			let push = parseInt(document.getElementById("push").value) || 0;
-			let sit = parseInt(document.getElementById("sit").value) || 0;
-			let min = parseInt(document.getElementById("min").value) || 0;
-			let sec = parseInt(document.getElementById("sec").value) || 0;
+        <hr>
+        <div id="reportSummary"></div>
+      </div>
 
-			let totalSec = (min * 60) + sec;
+      <div class="card">
+        <h2>Cadet Progress</h2>
+        <div class="small">Pick a cadet to see test history and improvement.</div>
 
-			let total = scorePushUps(gender, push) +
-				scoreSitUps(gender, sit) +
-				scoreRun(totalSec);
+        <label class="noPrint">Cadet</label>
+        <select id="repCadet" class="noPrint" onchange="renderAll()"></select>
+        <hr>
+        <div id="cadetProgress"></div>
+      </div>
+    </div>
 
-			let pass = (total >= 60);
+    <!-- LEADERBOARD -->
+    <div id="viewLeaderboard" class="row" style="display:none;">
+      <div class="card">
+        <h2>Leaderboard</h2>
+        <div class="small">Ranks are based on the most recent test per cadet (within filter range if set).</div>
 
-			let record = {
-				id: Date.now(),
-				name,
-				flight,
-				gender,
-				push,
-				sit,
-				run: min + ":" + sec,
-				total,
-				status: pass ? "PASS" : "FAIL"
-			};
+        <div class="grid3 noPrint">
+          <div>
+            <label>Flight</label>
+            <select id="lbFlight" onchange="renderAll()">
+              <option value="ALL">All Flights</option>
+              <option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option>
+              <option>Echo</option><option>Foxtrot</option>
+            </select>
+          </div>
+          <div>
+            <label>From</label>
+            <input type="date" id="lbFrom" onchange="renderAll()">
+          </div>
+          <div>
+            <label>To</label>
+            <input type="date" id="lbTo" onchange="renderAll()">
+          </div>
+        </div>
 
-			let records = JSON.parse(localStorage.getItem("pftRecords") || "[]");
-			records.push(record);
-			localStorage.setItem("pftRecords", JSON.stringify(records));
+        <hr>
+        <div id="leaderboard"></div>
+      </div>
 
-			display();
-		}
+      <div class="card">
+        <h2>Flight / Squadron Averages</h2>
+        <div class="small">Based on tests in the selected date range (or all time if blank).</div>
+        <hr>
+        <div id="avgPanel"></div>
+      </div>
+    </div>
 
-		// ===== DISPLAY =====
-		function display() {
-			let records = JSON.parse(localStorage.getItem("pftRecords") || "[]");
+  </div>
+</div>
 
-			let html = "<table><tr><th>Name</th><th>Flight</th><th>Total</th><th>Status</th><th>Del</th></tr>";
+<!-- SETTINGS MODAL -->
+<div id="settingsModal" class="modalBackdrop noPrint" onclick="backdropClose(event,'settingsModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Settings</h3>
+    <div class="small">Change instructor password and adjust scoring / pass threshold.</div>
+    <hr>
 
-			records.forEach(r => {
-				html += `<tr>
-        <td>${r.name}</td>
-        <td>${r.flight}</td>
-        <td>${r.total}</td>
-        <td class="${r.status==='PASS'?'pass':'fail'}">${r.status}</td>
-        <td><button onclick="deleteRecord(${r.id})">X</button></td>
-        </tr>`;
-			});
+    <label>Change Password</label>
+    <div class="grid2">
+      <input type="password" id="newPw" placeholder="New password">
+      <button class="btn small" onclick="setPassword()">Save Password</button>
+    </div>
+    <div class="small">If blank, password is not changed.</div>
 
-			html += "</table>";
-			document.getElementById("records").innerHTML = html;
+    <hr>
 
-			updateAverages(records);
-		}
+    <h3>Scoring (editable)</h3>
+    <div class="small">
+      This app uses a simple points system by default. You can tune these values to match your program’s standard.
+      (If you want exact AFJROTC tables, tell me the table you use and I’ll hardcode it.)
+    </div>
 
-		function deleteRecord(id) {
-			let records = JSON.parse(localStorage.getItem("pftRecords") || "[]");
-			records = records.filter(r => r.id !== id);
-			localStorage.setItem("pftRecords", JSON.stringify(records));
-			display();
-		}
+    <label>Push-up max reps for full 40 pts (Male)</label>
+    <input type="number" id="setPushMale" min="1">
+    <label>Push-up max reps for full 40 pts (Female)</label>
+    <input type="number" id="setPushFemale" min="1">
+    <label>Sit-up max reps for full 40 pts (All)</label>
+    <input type="number" id="setSitAll" min="1">
 
-		function clearAll() {
-			if (confirm("Clear ALL records?")) {
-				localStorage.removeItem("pftRecords");
-				display();
-			}
-		}
+    <label>Run “best time” for full 20 pts (seconds)</label>
+    <input type="number" id="setRunBest" min="1">
+    <label>Run “worst time” for 0 pts (seconds)</label>
+    <input type="number" id="setRunWorst" min="1">
 
-		// ===== AVERAGES =====
-		function updateAverages(records) {
+    <label>Pass Threshold (total points)</label>
+    <input type="number" id="setPass" min="0" max="100">
 
-			if (records.length === 0) {
-				document.getElementById("flightAvg").innerHTML = "No data.";
-				document.getElementById("squadAvg").innerHTML = "No data.";
-				return;
-			}
+    <button class="btn" onclick="saveSettings()">Save Settings</button>
+    <button class="btn secondary" onclick="closeModal('settingsModal')">Close</button>
+  </div>
+</div>
 
-			let flights = {};
-			let totalSum = 0;
+<!-- BACKUP / RESTORE MODAL -->
+<div id="backupModal" class="modalBackdrop noPrint" onclick="backdropClose(event,'backupModal')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3>Backup / Restore</h3>
+    <div class="small">Export all data to a JSON file, or import it on another device.</div>
+    <hr>
+    <div class="actions">
+      <button class="btn small" onclick="exportJSON()">Export Backup (JSON)</button>
+      <label class="btn small secondary" style="display:inline-block; cursor:pointer;">
+        Import Backup (JSON)
+        <input type="file" id="importFile" accept="application/json" style="display:none" onchange="importJSON(event)">
+      </label>
+    </div>
+    <hr>
+    <div class="small">
+      Tip: If you use iCloud Drive/Files, you can move the JSON backup between iPad/iPhone easily.
+    </div>
+    <button class="btn secondary" onclick="closeModal('backupModal')">Close</button>
+  </div>
+</div>
 
-			records.forEach(r => {
-				totalSum += r.total;
-				if (!flights[r.flight]) flights[r.flight] = [];
-				flights[r.flight].push(r.total);
-			});
+<script>
+// ====================== STORAGE KEYS ======================
+const K = {
+  pw: 'pft_pw',
+  cadets: 'pft_cadets',
+  tests: 'pft_tests',
+  settings: 'pft_settings'
+};
 
-			let flightHTML = "";
-			for (let f in flights) {
-				let avg = (flights[f].reduce((a, b) => a + b) / flights[f].length).toFixed(1);
-				flightHTML += `${f}: ${avg}<br>`;
-			}
+// ====================== DEFAULTS ======================
+const DEFAULT_PASSWORD = "JROTC2026";
+const DEFAULT_SETTINGS = {
+  pushMaleMax: 60,
+  pushFemaleMax: 45,
+  sitMax: 60,
+  runBest: 360,   // 6:00
+  runWorst: 900,  // 15:00
+  pass: 60
+};
 
-			let squadAvg = (totalSum / records.length).toFixed(1);
+function loadSettings(){
+  return {...DEFAULT_SETTINGS, ...safeParse(localStorage.getItem(K.settings), {})};
+}
+function saveSettingsToStorage(s){
+  localStorage.setItem(K.settings, JSON.stringify(s));
+}
+function getPassword(){
+  return localStorage.getItem(K.pw) || DEFAULT_PASSWORD;
+}
+function setPasswordToStorage(pw){
+  localStorage.setItem(K.pw, pw);
+}
+function loadCadets(){
+  return safeParse(localStorage.getItem(K.cadets), []);
+}
+function saveCadets(c){
+  localStorage.setItem(K.cadets, JSON.stringify(c));
+}
+function loadTests(){
+  return safeParse(localStorage.getItem(K.tests), []);
+}
+function saveTests(t){
+  localStorage.setItem(K.tests, JSON.stringify(t));
+}
+function safeParse(s, fallback){
+  try { return JSON.parse(s); } catch { return fallback; }
+}
+function uid(){ return Date.now() + Math.floor(Math.random()*1000); }
 
-			document.getElementById("flightAvg").innerHTML = flightHTML;
-			document.getElementById("squadAvg").innerHTML = "Average: " + squadAvg;
-		}
+function fmtTime(seconds){
+  if (seconds == null || isNaN(seconds)) return "";
+  const m = Math.floor(seconds/60);
+  const s = seconds%60;
+  return `${m}:${String(s).padStart(2,'0')}`;
+}
+function parseTime(min, sec){
+  const m = Number(min)||0;
+  const s = Number(sec)||0;
+  return (m*60)+Math.max(0, Math.min(59, s));
+}
+function todayISO(){
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
-		// ===== EXPORT =====
-		function exportCSV() {
-			let records = JSON.parse(localStorage.getItem("pftRecords") || "[]");
-			let csv = "Name,Flight,Gender,Push,Sit,Run,Total,Status\n";
-			records.forEach(r => {
-				csv += `${r.name},${r.flight},${r.gender},${r.push},${r.sit},${r.run},${r.total},${r.status}\n`;
-			});
+// ====================== AUTH ======================
+function unlock(){
+  const entered = document.getElementById('pw').value;
+  if (entered === getPassword()){
+    document.getElementById('lock').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    initUI();
+  } else {
+    alert("Incorrect password.");
+  }
+}
 
-			let blob = new Blob([csv], { type: 'text/csv' });
-			let url = URL.createObjectURL(blob);
-			let a = document.createElement("a");
-			a.href = url;
-			a.download = "AFJROTC_PFT_Results.csv";
-			a.click();
-		}
+// ====================== MODALS ======================
+function openModal(id){
+  syncSettingsForm();
+  document.getElementById(id).style.display='flex';
+}
+function closeModal(id){
+  document.getElementById(id).style.display='none';
+}
+function backdropClose(e,id){
+  if (e.target.id === id) closeModal(id);
+}
 
-		display();
+// ====================== TABS ======================
+function setTab(tab){
+  const views = ['Roster','Test','Reports','Leaderboard'];
+  views.forEach(v=>{
+    document.getElementById('view'+v).style.display = 'none';
+    document.getElementById('tab'+v).classList.remove('active');
+  });
+  if (tab==='roster'){ document.getElementById('viewRoster').style.display='grid'; document.getElementById('tabRoster').classList.add('active'); }
+  if (tab==='test'){ document.getElementById('viewTest').style.display='grid'; document.getElementById('tabTest').classList.add('active'); }
+  if (tab==='reports'){ document.getElementById('viewReports').style.display='grid'; document.getElementById('tabReports').classList.add('active'); }
+  if (tab==='leaderboard'){ document.getElementById('viewLeaderboard').style.display='grid'; document.getElementById('tabLeaderboard').classList.add('active'); }
+  renderAll();
+}
 
-		if ('serviceWorker' in navigator) {
-			navigator.serviceWorker.register('sw.js');
-		}
-	</script>
+// ====================== SCORING ======================
+function scorePush(gender, reps, s){
+  const max = (gender==='female') ? s.pushFemaleMax : s.pushMaleMax;
+  const pts = Math.floor((Math.max(0,reps)/max) * 40);
+  return clamp(pts, 0, 40);
+}
+function scoreSit(reps, s){
+  const max = s.sitMax;
+  const pts = Math.floor((Math.max(0,reps)/max) * 40);
+  return clamp(pts, 0, 40);
+}
+function scoreRun(runSeconds, s){
+  const best = s.runBest, worst = s.runWorst;
+  if (runSeconds <= best) return 20;
+  if (runSeconds >= worst) return 0;
+  const pts = Math.floor(((worst - runSeconds) / (worst - best)) * 20);
+  return clamp(pts, 0, 20);
+}
+function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+
+// ====================== CADETS ======================
+function addCadet(){
+  const last = document.getElementById('cLast').value.trim();
+  const first = document.getElementById('cFirst').value.trim();
+  const cid = document.getElementById('cId').value.trim();
+  const flight = document.getElementById('cFlight').value;
+  const grade = document.getElementById('cGrade').value;
+  const gender = document.getElementById('cGender').value;
+  const notes = document.getElementById('cNotes').value.trim();
+
+  if (!last || !first){
+    alert("Enter at least first and last name.");
+    return;
+  }
+
+  const cadets = loadCadets();
+  cadets.push({id: uid(), last, first, cid, flight, grade, gender, notes, createdAt: Date.now()});
+  saveCadets(cadets);
+
+  document.getElementById('cLast').value="";
+  document.getElementById('cFirst').value="";
+  document.getElementById('cId').value="";
+  document.getElementById('cNotes').value="";
+
+  renderAll();
+}
+
+function editCadet(id){
+  const cadets = loadCadets();
+  const c = cadets.find(x=>x.id===id);
+  if(!c) return;
+
+  const last = prompt("Last name:", c.last); if(last===null) return;
+  const first = prompt("First name:", c.first); if(first===null) return;
+  const cid = prompt("Cadet ID (optional):", c.cid||""); if(cid===null) return;
+  const flight = prompt("Flight:", c.flight); if(flight===null) return;
+  const grade = prompt("Grade (9-12):", c.grade); if(grade===null) return;
+  const gender = prompt("Gender (male/female):", c.gender); if(gender===null) return;
+  const notes = prompt("Notes:", c.notes||""); if(notes===null) return;
+
+  c.last = last.trim(); c.first = first.trim();
+  c.cid = cid.trim(); c.flight = flight.trim();
+  c.grade = grade.trim(); c.gender = gender.trim().toLowerCase()==='female'?'female':'male';
+  c.notes = notes.trim();
+
+  saveCadets(cadets);
+  renderAll();
+}
+
+function deleteCadet(id){
+  if(!confirm("Delete this cadet? Tests remain unless you clear tests.")) return;
+  const cadets = loadCadets().filter(c=>c.id!==id);
+  saveCadets(cadets);
+  renderAll();
+}
+
+// ====================== TESTS ======================
+function saveTest(){
+  const cadetId = Number(document.getElementById('testCadet').value);
+  const date = document.getElementById('testDate').value || todayISO();
+  const push = Number(document.getElementById('tPush').value)||0;
+  const sit = Number(document.getElementById('tSit').value)||0;
+  const runSec = parseTime(document.getElementById('tMin').value, document.getElementById('tSec').value);
+  const comment = document.getElementById('tComment').value.trim();
+
+  const cadets = loadCadets();
+  const cadet = cadets.find(c=>c.id===cadetId);
+  if(!cadet){ alert("Select a cadet."); return; }
+
+  const s = loadSettings();
+  const pPts = scorePush(cadet.gender, push, s);
+  const sPts = scoreSit(sit, s);
+  const rPts = scoreRun(runSec, s);
+  const total = pPts + sPts + rPts;
+  const status = total >= s.pass ? 'PASS' : 'FAIL';
+
+  const tests = loadTests();
+  tests.push({
+    id: uid(),
+    cadetId,
+    date,
+    flight: cadet.flight,
+    gender: cadet.gender,
+    push, sit, runSec,
+    pPts, sPts, rPts,
+    total,
+    status,
+    comment,
+    createdAt: Date.now()
+  });
+  saveTests(tests);
+
+  // show result
+  const el = document.getElementById('testResult');
+  el.style.display = 'block';
+  el.innerHTML = `
+    <h3>Saved</h3>
+    <div class="pill">${cadet.last}, ${cadet.first} • ${cadet.flight} • ${cadet.gender}</div>
+    <hr>
+    <table>
+      <tr><th>Push-ups</th><td>${push}</td><th>Points</th><td>${pPts}/40</td></tr>
+      <tr><th>Sit-ups</th><td>${sit}</td><th>Points</th><td>${sPts}/40</td></tr>
+      <tr><th>Run</th><td>${fmtTime(runSec)}</td><th>Points</th><td>${rPts}/20</td></tr>
+      <tr><th>Total</th><td><b>${total}</b></td><th>Status</th><td class="${status==='PASS'?'pass':'fail'}">${status}</td></tr>
+    </table>
+    ${comment ? `<hr><div class="small"><b>Comment:</b> ${escapeHtml(comment)}</div>` : ``}
+  `;
+
+  // clear entry fields (keep cadet + date)
+  document.getElementById('tPush').value="";
+  document.getElementById('tSit').value="";
+  document.getElementById('tMin').value="";
+  document.getElementById('tSec').value="";
+  document.getElementById('tComment').value="";
+
+  renderAll();
+}
+
+function deleteTest(id){
+  if(!confirm("Delete this test record?")) return;
+  const tests = loadTests().filter(t=>t.id!==id);
+  saveTests(tests);
+  renderAll();
+}
+
+// ====================== FILTERING HELPERS ======================
+function inDateRange(dateISO, fromISO, toISO){
+  if(!dateISO) return false;
+  if(fromISO && dateISO < fromISO) return false;
+  if(toISO && dateISO > toISO) return false;
+  return true;
+}
+function flightMatch(flight, selected){
+  return (selected==='ALL' || !selected) ? true : (flight===selected);
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+// ====================== RENDER ======================
+function initUI(){
+  // defaults for date inputs
+  document.getElementById('testDate').value = todayISO();
+
+  // populate settings form
+  syncSettingsForm();
+
+  // set reports cadet dropdown
+  renderAll();
+
+  // service worker
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js');
+  }
+
+  // auto-fill flight/gender on test selection
+  document.getElementById('testCadet').addEventListener('change', syncSelectedCadetToTestForm);
+}
+
+function syncSelectedCadetToTestForm(){
+  const cadetId = Number(document.getElementById('testCadet').value);
+  const cadet = loadCadets().find(c=>c.id===cadetId);
+  document.getElementById('testFlight').value = cadet ? cadet.flight : '';
+  document.getElementById('testGender').value = cadet ? cadet.gender : '';
+}
+
+function renderAll(){
+  renderRoster();
+  renderCadetSelectors();
+  renderRecentTests();
+  renderReports();
+  renderLeaderboardAndAverages();
+}
+
+function renderCadetSelectors(){
+  const cadets = loadCadets().slice().sort((a,b)=> (a.last+a.first).localeCompare(b.last+b.first));
+  const testSel = document.getElementById('testCadet');
+  const repSel = document.getElementById('repCadet');
+
+  const opts = cadets.map(c=>`<option value="${c.id}">${escapeHtml(c.last)}, ${escapeHtml(c.first)} (${escapeHtml(c.flight)})</option>`).join('');
+  testSel.innerHTML = opts;
+  repSel.innerHTML = `<option value="ALL">All Cadets</option>` + opts;
+
+  // sync test form fields if any cadet exists
+  if(cadets.length){
+    if(!testSel.value) testSel.value = String(cadets[0].id);
+    syncSelectedCadetToTestForm();
+  } else {
+    document.getElementById('testFlight').value='';
+    document.getElementById('testGender').value='';
+  }
+}
+
+function renderRoster(){
+  const cadets = loadCadets();
+  const q = (document.getElementById('rosterSearch')?.value || '').trim().toLowerCase();
+  let filtered = cadets;
+
+  if(q){
+    filtered = cadets.filter(c=>{
+      const blob = `${c.last} ${c.first} ${c.cid||''} ${c.flight||''} ${c.grade||''} ${c.gender||''} ${c.notes||''}`.toLowerCase();
+      return blob.includes(q);
+    });
+  }
+
+  const total = cadets.length;
+  document.getElementById('rosterStats').innerHTML = `${total} cadet(s). Showing ${filtered.length}.`;
+
+  if(!filtered.length){
+    document.getElementById('rosterTable').innerHTML = `<div class="small">No cadets found.</div>`;
+    return;
+  }
+
+  const rows = filtered
+    .slice()
+    .sort((a,b)=> (a.flight+a.last+a.first).localeCompare(b.flight+b.last+b.first))
+    .map(c=>`
+      <tr>
+        <td><b>${escapeHtml(c.last)}, ${escapeHtml(c.first)}</b><div class="small">${escapeHtml(c.cid||'')}</div></td>
+        <td>${escapeHtml(c.flight)}<div class="small">Grade ${escapeHtml(c.grade)}</div></td>
+        <td>${escapeHtml(c.gender)}<div class="small">${escapeHtml(c.notes||'')}</div></td>
+        <td class="noPrint">
+          <div class="actions">
+            <button class="btn small secondary" onclick="editCadet(${c.id})">Edit</button>
+            <button class="btn small danger" onclick="deleteCadet(${c.id})">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+  document.getElementById('rosterTable').innerHTML = `
+    <table>
+      <tr><th>Cadet</th><th>Flight</th><th>Details</th><th class="noPrint">Actions</th></tr>
+      ${rows}
+    </table>
+  `;
+}
+
+function renderRecentTests(){
+  const tests = loadTests()
+    .slice()
+    .sort((a,b)=>b.createdAt - a.createdAt)
+    .slice(0,25);
+
+  const cadetById = Object.fromEntries(loadCadets().map(c=>[c.id,c]));
+
+  if(!tests.length){
+    document.getElementById('recentTests').innerHTML = `<div class="small">No tests recorded yet.</div>`;
+    return;
+  }
+
+  const rows = tests.map(t=>{
+    const c = cadetById[t.cadetId];
+    const name = c ? `${c.last}, ${c.first}` : `Cadet #${t.cadetId}`;
+    return `
+      <tr>
+        <td><b>${escapeHtml(name)}</b><div class="small">${escapeHtml(t.date)} • ${escapeHtml(t.flight)} • ${escapeHtml(t.gender)}</div></td>
+        <td>${t.push} / ${t.sit} / ${fmtTime(t.runSec)}<div class="small">P/S/R pts: ${t.pPts}/${t.sPts}/${t.rPts}</div></td>
+        <td><b>${t.total}</b><div class="${t.status==='PASS'?'pass':'fail'}">${t.status}</div></td>
+        <td class="noPrint">
+          <button class="btn small danger" onclick="deleteTest(${t.id})">Delete</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  document.getElementById('recentTests').innerHTML = `
+    <table>
+      <tr><th>Cadet</th><th>Results</th><th>Total</th><th class="noPrint">Action</th></tr>
+      ${rows}
+    </table>
+  `;
+}
+
+function renderReports(){
+  const cadets = loadCadets();
+  const tests = loadTests();
+  const cadetById = Object.fromEntries(cadets.map(c=>[c.id,c]));
+
+  const f = document.getElementById('repFlight').value || 'ALL';
+  const from = document.getElementById('repFrom').value || '';
+  const to = document.getElementById('repTo').value || '';
+
+  const filteredTests = tests.filter(t=> flightMatch(t.flight, f) && inDateRange(t.date, from, to));
+
+  // summary
+  const s = loadSettings();
+  const totalCount = filteredTests.length;
+  const passCount = filteredTests.filter(t=>t.status==='PASS').length;
+  const failCount = totalCount - passCount;
+  const avg = totalCount ? (filteredTests.reduce((a,b)=>a+b.total,0)/totalCount).toFixed(1) : '—';
+
+  document.getElementById('reportSummary').innerHTML = `
+    <div class="pill">Tests: <b>${totalCount}</b></div>
+    <div class="pill">Avg: <b>${avg}</b></div>
+    <div class="pill">Pass (≥${s.pass}): <b>${passCount}</b></div>
+    <div class="pill">Fail: <b>${failCount}</b></div>
+    <hr>
+    ${renderFlightAveragesHTML(filteredTests)}
+  `;
+
+  // cadet progress
+  const cadetPick = document.getElementById('repCadet').value || 'ALL';
+  let showCadets = cadets;
+  if(f !== 'ALL') showCadets = showCadets.filter(c=>c.flight===f);
+  if(cadetPick !== 'ALL') showCadets = showCadets.filter(c=>String(c.id)===String(cadetPick));
+
+  if(!showCadets.length){
+    document.getElementById('cadetProgress').innerHTML = `<div class="small">No cadets match the filter.</div>`;
+    return;
+  }
+
+  const blocks = showCadets
+    .slice()
+    .sort((a,b)=> (a.flight+a.last+a.first).localeCompare(b.flight+b.last+b.first))
+    .map(c=>{
+      const ct = filteredTests
+        .filter(t=>t.cadetId===c.id)
+        .sort((a,b)=> a.date.localeCompare(b.date));
+
+      if(!ct.length){
+        return `
+          <div class="card">
+            <b>${escapeHtml(c.last)}, ${escapeHtml(c.first)}</b>
+            <div class="small">${escapeHtml(c.flight)} • ${escapeHtml(c.gender)} • Grade ${escapeHtml(c.grade)}</div>
+            <hr>
+            <div class="small">No tests in this range.</div>
+          </div>
+        `;
+      }
+
+      const first = ct[0].total;
+      const last = ct[ct.length-1].total;
+      const delta = (last-first);
+      const deltaStr = (delta>=0?`+${delta}`:`${delta}`);
+
+      const rows = ct.map(t=>`
+        <tr>
+          <td>${escapeHtml(t.date)}</td>
+          <td>${t.push}</td><td>${t.sit}</td><td>${fmtTime(t.runSec)}</td>
+          <td>${t.total}</td>
+          <td class="${t.status==='PASS'?'pass':'fail'}">${t.status}</td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="card">
+          <b>${escapeHtml(c.last)}, ${escapeHtml(c.first)}</b>
+          <div class="small">${escapeHtml(c.flight)} • ${escapeHtml(c.gender)} • Grade ${escapeHtml(c.grade)} • Change: <b>${deltaStr}</b></div>
+          <hr>
+          <table>
+            <tr><th>Date</th><th>Push</th><th>Sit</th><th>Run</th><th>Total</th><th>Status</th></tr>
+            ${rows}
+          </table>
+        </div>
+      `;
+    }).join('');
+
+  document.getElementById('cadetProgress').innerHTML = blocks;
+}
+
+function renderLeaderboardAndAverages(){
+  const cadets = loadCadets();
+  const tests = loadTests();
+  const cadetById = Object.fromEntries(cadets.map(c=>[c.id,c]));
+
+  // Filters
+  const lbFlight = document.getElementById('lbFlight').value || 'ALL';
+  const from = document.getElementById('lbFrom').value || '';
+  const to = document.getElementById('lbTo').value || '';
+
+  const eligibleTests = tests.filter(t=> flightMatch(t.flight, lbFlight) && inDateRange(t.date, from, to));
+
+  // Most recent test per cadet
+  const latestByCadet = new Map();
+  eligibleTests
+    .slice()
+    .sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt - a.createdAt)
+    .forEach(t=>{
+      if(!latestByCadet.has(t.cadetId)){
+        latestByCadet.set(t.cadetId, t);
+      }
+    });
+
+  const latestList = Array.from(latestByCadet.values())
+    .map(t=>{
+      const c = cadetById[t.cadetId];
+      return {t, c};
+    })
+    .filter(x=>x.c) // only those still in roster
+    .sort((a,b)=> b.t.total - a.t.total);
+
+  if(!latestList.length){
+    document.getElementById('leaderboard').innerHTML = `<div class="small">No tests in this range.</div>`;
+  } else {
+    const rows = latestList.map((x,i)=>`
+      <tr>
+        <td><b>#${i+1}</b></td>
+        <td><b>${escapeHtml(x.c.last)}, ${escapeHtml(x.c.first)}</b><div class="small">${escapeHtml(x.c.flight)} • ${escapeHtml(x.c.gender)} • ${escapeHtml(x.t.date)}</div></td>
+        <td>${x.t.total}<div class="${x.t.status==='PASS'?'pass':'fail'}">${x.t.status}</div></td>
+        <td class="small">P/S/R pts: ${x.t.pPts}/${x.t.sPts}/${x.t.rPts}</td>
+      </tr>
+    `).join('');
+
+    document.getElementById('leaderboard').innerHTML = `
+      <table>
+        <tr><th>Rank</th><th>Cadet</th><th>Total</th><th>Notes</th></tr>
+        ${rows}
+      </table>
+    `;
+  }
+
+  // Averages panel (flight + squadron) based on eligibleTests
+  document.getElementById('avgPanel').innerHTML = renderFlightAveragesHTML(eligibleTests, true);
+}
+
+function renderFlightAveragesHTML(tests, includeSquadron=true){
+  if(!tests.length){
+    return `<div class="small">No data for averages.</div>`;
+  }
+
+  const byFlight = {};
+  tests.forEach(t=>{
+    if(!byFlight[t.flight]) byFlight[t.flight] = [];
+    byFlight[t.flight].push(t.total);
+  });
+
+  let html = `<table><tr><th>Flight</th><th>Avg Score</th><th>Tests</th></tr>`;
+  let squadSum = 0, squadN = 0;
+
+  Object.keys(byFlight).sort().forEach(f=>{
+    const arr = byFlight[f];
+    const avg = (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1);
+    html += `<tr><td><b>${escapeHtml(f)}</b></td><td>${avg}</td><td>${arr.length}</td></tr>`;
+    squadSum += arr.reduce((a,b)=>a+b,0);
+    squadN += arr.length;
+  });
+
+  if(includeSquadron){
+    const squadAvg = (squadSum / squadN).toFixed(1);
+    html += `<tr><td><b>Squadron</b></td><td><b>${squadAvg}</b></td><td>${squadN}</td></tr>`;
+  }
+  html += `</table>`;
+  return html;
+}
+
+// ====================== SETTINGS ======================
+function syncSettingsForm(){
+  const s = loadSettings();
+  document.getElementById('setPushMale').value = s.pushMaleMax;
+  document.getElementById('setPushFemale').value = s.pushFemaleMax;
+  document.getElementById('setSitAll').value = s.sitMax;
+  document.getElementById('setRunBest').value = s.runBest;
+  document.getElementById('setRunWorst').value = s.runWorst;
+  document.getElementById('setPass').value = s.pass;
+}
+function saveSettings(){
+  const s = loadSettings();
+  s.pushMaleMax = Number(document.getElementById('setPushMale').value)||DEFAULT_SETTINGS.pushMaleMax;
+  s.pushFemaleMax = Number(document.getElementById('setPushFemale').value)||DEFAULT_SETTINGS.pushFemaleMax;
+  s.sitMax = Number(document.getElementById('setSitAll').value)||DEFAULT_SETTINGS.sitMax;
+  s.runBest = Number(document.getElementById('setRunBest').value)||DEFAULT_SETTINGS.runBest;
+  s.runWorst = Number(document.getElementById('setRunWorst').value)||DEFAULT_SETTINGS.runWorst;
+  s.pass = clamp(Number(document.getElementById('setPass').value)||DEFAULT_SETTINGS.pass, 0, 100);
+  if(s.runWorst <= s.runBest){
+    alert("Run worst time must be greater than run best time.");
+    return;
+  }
+  saveSettingsToStorage(s);
+  alert("Settings saved.");
+  closeModal('settingsModal');
+  renderAll();
+}
+function setPassword(){
+  const np = document.getElementById('newPw').value;
+  if(!np){ alert("Enter a new password first."); return; }
+  setPasswordToStorage(np);
+  document.getElementById('newPw').value="";
+  alert("Password updated.");
+}
+
+// ====================== EXPORTS ======================
+function exportCSV(kind){
+  const cadets = loadCadets();
+  const tests = loadTests();
+
+  let csv = "";
+  let filename = "";
+
+  if(kind==='roster'){
+    filename = "AFJROTC_Roster.csv";
+    csv = "CadetID,Last,First,Flight,Grade,Gender,Notes\n";
+    cadets.forEach(c=>{
+      csv += `${csvEsc(c.cid||"")},${csvEsc(c.last)},${csvEsc(c.first)},${csvEsc(c.flight)},${csvEsc(c.grade)},${csvEsc(c.gender)},${csvEsc(c.notes||"")}\n`;
+    });
+  } else {
+    filename = "AFJROTC_PFT_Tests.csv";
+    csv = "Date,CadetID,Last,First,Flight,Gender,Push,Sit,Run,PushPts,SitPts,RunPts,Total,Status,Comment\n";
+    const cadetById = Object.fromEntries(cadets.map(c=>[c.id,c]));
+    tests
+      .slice()
+      .sort((a,b)=> b.date.localeCompare(a.date) || b.createdAt-a.createdAt)
+      .forEach(t=>{
+        const c = cadetById[t.cadetId] || {cid:"", last:"", first:""};
+        csv += `${csvEsc(t.date)},${csvEsc(c.cid||"")},${csvEsc(c.last||"")},${csvEsc(c.first||"")},${csvEsc(t.flight)},${csvEsc(t.gender)},${t.push},${t.sit},${csvEsc(fmtTime(t.runSec))},${t.pPts},${t.sPts},${t.rPts},${t.total},${t.status},${csvEsc(t.comment||"")}\n`;
+      });
+  }
+
+  downloadBlob(csv, filename, "text/csv");
+}
+function csvEsc(v){
+  const s = String(v ?? "");
+  if (/[",\n]/.test(s)) return `"${s.replace(/"/g,'""')}"`;
+  return s;
+}
+
+function exportJSON(){
+  const payload = {
+    version: 1,
+    exportedAt: new Date().toISOString(),
+    password: getPassword(),
+    settings: loadSettings(),
+    cadets: loadCadets(),
+    tests: loadTests()
+  };
+  downloadBlob(JSON.stringify(payload, null, 2), "AFJROTC_PFT_Backup.json", "application/json");
+}
+
+function importJSON(evt){
+  const file = evt.target.files?.[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const data = JSON.parse(reader.result);
+      if(!data || typeof data !== 'object') throw new Error("Bad file");
+      if(!confirm("Import will replace current roster/tests/settings on this device. Continue?")) return;
+
+      if(data.password) setPasswordToStorage(String(data.password));
+      if(data.settings) saveSettingsToStorage(data.settings);
+      if(Array.isArray(data.cadets)) saveCadets(data.cadets);
+      if(Array.isArray(data.tests)) saveTests(data.tests);
+
+      alert("Import complete.");
+      closeModal('backupModal');
+      renderAll();
+    } catch(e){
+      alert("Could not import that file.");
+    } finally {
+      evt.target.value = "";
+    }
+  };
+  reader.readAsText(file);
+}
+
+function downloadBlob(text, filename, mime){
+  const blob = new Blob([text], {type: mime});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ====================== CLEAR ======================
+function clearAll(kind){
+  if(kind==='cadets'){
+    if(!confirm("Clear ALL cadets from roster?")) return;
+    localStorage.removeItem(K.cadets);
+  } else if(kind==='tests'){
+    if(!confirm("Clear ALL tests?")) return;
+    localStorage.removeItem(K.tests);
+  }
+  renderAll();
+}
+
+// ====================== INIT DEFAULT FILTERS ======================
+(function initFilters(){
+  // set blank by default (all-time) for report/leaderboard date ranges
+  // and keep flight = ALL
+  if(document.getElementById('repFlight')) document.getElementById('repFlight').value = 'ALL';
+  if(document.getElementById('lbFlight')) document.getElementById('lbFlight').value = 'ALL';
+})();
+
+</script>
+
 </body>
-
 </html>
